@@ -12,16 +12,21 @@ let playerY = c.height / 2 + 20;
 let angle = 0;
 const cubeSize = 35;
 const cubeHalfSize = cubeSize / 2;
-const cubePos = { x: [], y: [], color: [], collided: [] };
+const cubePos = { x: [], y: [], color: [], collided: [], fallThreshold: [] };
 const cubeColor = ["#FFFFFF", "#00FFB2"];
 
 // level variables
 let score = 0;
 const cubeSpeed = 5;
+let cubeFallThreshold = Math.random() * 2 - randomInt(1, 3);
 let isGameOver = false;
 
 function randomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function randomFloat(min, max) {
+  return Math.random() * (max - min) + min;
 }
 
 const getDistance = (xpos1, ypos1, xpos2, ypos2) => {
@@ -33,10 +38,12 @@ function generateCubePos() {
 
   let lastX = randomInt(50, c.width - 50);
   let lastY = randomInt(-10, 0);
+
   cubePos.x.push(lastX);
   cubePos.y.push(lastY);
   cubePos.color.push(Math.random() < 0.85 ? 0 : 1);
   cubePos.collided.push(false);
+  cubePos.fallThreshold.push(Math.random() * 2 - randomFloat(1, 2.5));
 
   let interval = randomInt(200, 500);
 
@@ -57,6 +64,7 @@ function generateCubePos() {
     cubePos.y.push(newY);
     cubePos.color.push(Math.random() < 0.9 ? 0 : 1);
     cubePos.collided.push(false);
+    cubePos.fallThreshold.push(Math.random() * 2 - randomFloat(1, 2.5));
 
     lastX = newX;
     lastY = newY;
@@ -86,8 +94,8 @@ document.onmousemove = (event) => {
   mouseX = (event.clientX - rect.left) / 3;
 };
 
+// Main Loop
 function loop() {
-  document.getElementById("gameOver").innerHTML = isGameOver;
   // draw the background
   ctx.fillStyle = "#1F2539";
   ctx.fillRect(0, 0, c.width, c.height);
@@ -106,9 +114,15 @@ function loop() {
 
   playerX = playerX > c.width - 75 ? c.width - 75 : playerX < 75 ? 75 : playerX; // limit the player from going out of the handle
   document.getElementById("score").innerHTML = score;
+
   // draw falling cubes
   cubePos.x.forEach((x, i) => {
-    drawObstacle(x, (cubePos.y[i] += cubeSpeed), cubePos.color[i]);
+    drawObstacle(
+      (cubePos.x[i] += cubePos.fallThreshold[i]),
+      (cubePos.y[i] += cubeSpeed),
+      cubePos.color[i]
+    );
+    console.log(i + " " + x + " " + cubePos.y[i]);
   });
 
   for (let i = 0; i < cubePos.x.length; i++) {
@@ -118,6 +132,7 @@ function loop() {
       cubePos.x.splice(i, 1);
       cubePos.color.splice(i, 1);
       cubePos.collided.splice(i, 1);
+      cubePos.fallThreshold.splice(i, 1);
       continue;
     }
     let distance = getDistance(
@@ -144,6 +159,7 @@ function loop() {
   }
   angle += 2;
 
+  document.getElementById("gameOver").innerHTML = isGameOver;
   if (!isGameOver) {
     requestAnimationFrame(loop);
   }
