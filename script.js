@@ -35,7 +35,7 @@ function generateCubePos() {
   let lastY = randomInt(-10, 0);
   cubePos.x.push(lastX);
   cubePos.y.push(lastY);
-  cubePos.color.push(Math.random() < randomInt(0.7, 0.9) ? 0 : 1);
+  cubePos.color.push(Math.random() < 0.85 ? 0 : 1);
   cubePos.collided.push(false);
 
   let interval = randomInt(200, 500);
@@ -55,7 +55,7 @@ function generateCubePos() {
 
     cubePos.x.push(newX);
     cubePos.y.push(newY);
-    cubePos.color.push(Math.random() < randomInt(0.7, 0.9) ? 0 : 1);
+    cubePos.color.push(Math.random() < 0.9 ? 0 : 1);
     cubePos.collided.push(false);
 
     lastX = newX;
@@ -87,6 +87,7 @@ document.onmousemove = (event) => {
 };
 
 function loop() {
+  document.getElementById("gameOver").innerHTML = isGameOver;
   // draw the background
   ctx.fillStyle = "#1F2539";
   ctx.fillRect(0, 0, c.width, c.height);
@@ -119,33 +120,26 @@ function loop() {
       cubePos.collided.splice(i, 1);
       continue;
     }
-    // // check if the player has collided with a cube
-    // let isCollided =
-    //   getDistance(cubePos.x[i], cubePos.y[i], playerX, playerY) < 20;
+    let distance = getDistance(
+      cubePos.x[i] + cubeHalfSize,
+      cubePos.y[i] + cubeHalfSize,
+      playerX,
+      playerY
+    );
+    let minCollisionDistance =
+      20 + Math.sqrt(cubeHalfSize * cubeHalfSize + cubeHalfSize * cubeHalfSize);
 
-    // if (isCollided && cubePos.color[i] === 1 && !cubePos.collided[i]) {
-    //   score++;
-    //   cubePos.collided[i] = true;
-    // } else if (isCollided && cubePos.color[i] === 0) {
-    //   isGameOver = true;
-    // }
-
-
-    // Calculate the distance between the center of the cube and the player's position
-    let distance = getDistance(cubePos.x[i] + cubeHalfSize, cubePos.y[i] + cubeHalfSize, playerX, playerY);
-
-
-    // Calculate the minimum distance for a collision to occur (sum of the player's radius and half the cube's diagonal)
-    let minCollisionDistance = 20 + Math.sqrt(cubeHalfSize * cubeHalfSize + cubeHalfSize * cubeHalfSize);
-
-
-    // Check if a collision occurred
-    if (distance < minCollisionDistance && cubePos.color[i] === 1 && !cubePos.collided[i]) {
-        score++;
-        cubePos.collided[i] = true;
-    } else if (distance < 20 && cubePos.color[i] === 0 && !cubePos.collided[i]) {
-        isGameOver = true;
-        cubePos.collided[i] = true;
+    let isCollided = distance < minCollisionDistance;
+    if (isCollided && cubePos.color[i] === 1 && !cubePos.collided[i]) {
+      score++;
+      cubePos.collided[i] = true;
+      cubePos.y.splice(i, 1);
+      cubePos.x.splice(i, 1);
+      cubePos.color.splice(i, 1);
+      cubePos.collided.splice(i, 1);
+    } else if (isCollided && cubePos.color[i] === 0 && !cubePos.collided[i]) {
+      isGameOver = true;
+      cubePos.collided[i] = true;
     }
   }
   angle += 2;
