@@ -89,6 +89,8 @@ function drawObstacle(x, y, colorIndex, size) {
   ctx.restore();
 }
 
+////////////////////////////////////////////////////////////////////////////////////////
+
 let gameOverTextY = -20;
 let scoreTextY = CANVAS_HEIGHT + 70;
 let currentDisplayedScore = 0;
@@ -141,11 +143,22 @@ function gameOverScene() {
   }
 }
 
-// move the player with the mouse position
-document.onmousemove = (event) => {
+////////////////////////////////////////////////////////////////////////////////////////
+
+
+function handleInput(event) {
+  let inputX;
+  if (event.type === "mousemove") {
+    inputX = event.clientX;
+  } else if (event.type === "touchmove") {
+    inputX = event.touches[0].clientX;
+  }
   const rect = c.getBoundingClientRect();
-  mouseX = (event.clientX - rect.left) / 3;
-};
+  mouseX = (inputX - rect.left) / 3;
+}
+
+document.addEventListener("mousemove", handleInput);
+document.addEventListener("touchmove", handleInput);
 
 // Main Loop
 function loop() {
