@@ -1,8 +1,8 @@
 const c = document.getElementById("canvas");
 const ctx = c.getContext("2d");
 
-c.width = 400;
-c.height = 600;
+let CANVAS_WIDTH = (c.width = 400);
+let CANVAS_HEIGHT = (c.height = 600);
 
 let mouseX = c.width / 2;
 let playerX = 0;
@@ -89,6 +89,58 @@ function drawObstacle(x, y, colorIndex, size) {
   ctx.restore();
 }
 
+let gameOverTextY = -20;
+let scoreTextY = CANVAS_HEIGHT + 70;
+let currentDisplayedScore = 0;
+let scoreIncreaseInterval;
+
+function gameOverScene() {
+  ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+  // draw the background
+  ctx.fillStyle = "#1F2539";
+  ctx.fillRect(0, 0, c.width, c.height);
+
+  ctx.font = "50px Arial";
+  ctx.fillStyle = "#FFFFFF";
+  ctx.textAlign = "center";
+  ctx.fillText("Game Over", CANVAS_WIDTH / 2, gameOverTextY);
+
+  ctx.font = "30px Arial";
+  ctx.fillStyle = "#FFFFFF";
+  ctx.textAlign = "center";
+  ctx.fillText("Score: " + currentDisplayedScore, CANVAS_WIDTH / 2, scoreTextY);
+
+  if (gameOverTextY < CANVAS_HEIGHT / 2) {
+    gameOverTextY += 10;
+  }
+  if (scoreTextY > CANVAS_HEIGHT / 2 + 50) {
+    scoreTextY -= 10;
+  }
+
+  if (
+    gameOverTextY >= CANVAS_HEIGHT / 2 &&
+    scoreTextY <= CANVAS_HEIGHT / 2 + 50
+  ) {
+    scoreIncreaseInterval = setInterval(increaseScore, 200);
+  }
+
+  if (
+    gameOverTextY < CANVAS_HEIGHT / 2 ||
+    scoreTextY > CANVAS_HEIGHT / 2 + 50 ||
+    currentDisplayedScore <= score
+  ) {
+    requestAnimationFrame(gameOverScene);
+  }
+
+  function increaseScore() {
+    if (currentDisplayedScore < score) {
+      currentDisplayedScore += 1;
+    } else {
+      clearInterval(scoreIncreaseInterval);
+    }
+  }
+}
+
 // move the player with the mouse position
 document.onmousemove = (event) => {
   const rect = c.getBoundingClientRect();
@@ -105,16 +157,21 @@ function loop() {
   ctx.fillStyle = "#111A23";
   ctx.fillRect((c.width - (c.width - 75)) / 2, c.height / 2, c.width - 75, 40);
 
+  //draw score text
+  ctx.font = "80px Arial";
+  ctx.fillStyle = "#FFFFFF";
+  ctx.textAlign = "center";
+  ctx.fillText(score, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 1.2);
+
   // draw the player
   ctx.beginPath();
-  ctx.arc(playerX, playerY, playerSize, 0, 2 * Math.PI);
+  ctx.arc(playerX, playerY, playerSize > 0 ? playerSize : 0, 0, 2 * Math.PI);
   ctx.fillStyle = "#00FFB2";
   ctx.fill();
 
   playerX = c.width / 2 + mouseX;
 
   playerX = playerX > c.width - 75 ? c.width - 75 : playerX < 75 ? 75 : playerX; // limit the player from going out of the handle
-  document.getElementById("score").innerHTML = score;
 
   // draw falling cubes
   cubePos.x.forEach((x, i) => {
@@ -125,7 +182,6 @@ function loop() {
       cubePos.color[i],
       currentCubeSize
     );
-    console.log(i + " " + x + " " + cubePos.y[i]);
   });
 
   for (let i = 0; i < cubePos.x.length; i++) {
@@ -163,7 +219,6 @@ function loop() {
   }
   angle += 2;
 
-  document.getElementById("gameOver").innerHTML = isGameOver;
   if (!isGameOver) {
     requestAnimationFrame(loop);
   } else {
@@ -171,6 +226,8 @@ function loop() {
       cubeSize -= 1;
       playerSize -= 1;
       requestAnimationFrame(loop);
+    } else {
+      gameOverScene();
     }
   }
 }
