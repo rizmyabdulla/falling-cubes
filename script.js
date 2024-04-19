@@ -7,10 +7,11 @@ c.height = 600;
 let mouseX = c.width / 2;
 let playerX = 0;
 let playerY = c.height / 2 + 20;
+let playerSize = 20;
 
 // cube variables
 let angle = 0;
-const cubeSize = 35;
+let cubeSize = 35;
 const cubeHalfSize = cubeSize / 2;
 const cubePos = { x: [], y: [], color: [], collided: [], fallThreshold: [] };
 const cubeColor = ["#FFFFFF", "#00FFB2"];
@@ -78,13 +79,13 @@ function generateCubePos() {
 }
 
 // draw an obstacle (Falling Cube)
-function drawObstacle(x, y, colorIndex) {
+function drawObstacle(x, y, colorIndex, size) {
   ctx.save();
-  ctx.translate(x + cubeHalfSize, y + cubeHalfSize);
+  ctx.translate(x + size / 2, y + size / 2);
   ctx.rotate((angle * Math.PI) / 180);
 
   ctx.fillStyle = cubeColor[colorIndex];
-  ctx.fillRect(-cubeHalfSize, -cubeHalfSize, cubeSize, cubeSize);
+  ctx.fillRect(-size / 2, -size / 2, size, size);
   ctx.restore();
 }
 
@@ -106,7 +107,7 @@ function loop() {
 
   // draw the player
   ctx.beginPath();
-  ctx.arc(playerX, playerY, 20, 0, 2 * Math.PI);
+  ctx.arc(playerX, playerY, playerSize, 0, 2 * Math.PI);
   ctx.fillStyle = "#00FFB2";
   ctx.fill();
 
@@ -117,10 +118,12 @@ function loop() {
 
   // draw falling cubes
   cubePos.x.forEach((x, i) => {
+    let currentCubeSize = cubePos.collided[i] ? cubeSize - 1 : cubeSize;
     drawObstacle(
       (cubePos.x[i] += cubePos.fallThreshold[i]),
       (cubePos.y[i] += cubeSpeed),
-      cubePos.color[i]
+      cubePos.color[i],
+      currentCubeSize
     );
     console.log(i + " " + x + " " + cubePos.y[i]);
   });
@@ -142,7 +145,8 @@ function loop() {
       playerY
     );
     let minCollisionDistance =
-      20 + Math.sqrt(cubeHalfSize * cubeHalfSize + cubeHalfSize * cubeHalfSize);
+      playerSize +
+      Math.sqrt(cubeHalfSize * cubeHalfSize + cubeHalfSize * cubeHalfSize);
 
     let isCollided = distance < minCollisionDistance;
     if (isCollided && cubePos.color[i] === 1 && !cubePos.collided[i]) {
@@ -162,6 +166,12 @@ function loop() {
   document.getElementById("gameOver").innerHTML = isGameOver;
   if (!isGameOver) {
     requestAnimationFrame(loop);
+  } else {
+    if (cubeSize > 0) {
+      cubeSize -= 1;
+      playerSize -= 1;
+      requestAnimationFrame(loop);
+    }
   }
 }
 generateCubePos();
