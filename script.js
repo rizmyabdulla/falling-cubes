@@ -5,9 +5,11 @@ let CANVAS_WIDTH = (c.width = 400);
 let CANVAS_HEIGHT = (c.height = 600);
 
 let mouseX = c.width / 2;
+
 let playerX = 0;
 let playerY = c.height / 2 + 20;
 let playerSize = 20;
+const playerMoveSpeed = 0.05;
 
 // cube variables
 let angle = 0;
@@ -145,20 +147,22 @@ function gameOverScene() {
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
-
 function handleInput(event) {
   let inputX;
   if (event.type === "mousemove") {
     inputX = event.clientX;
   } else if (event.type === "touchmove") {
+    event.preventDefault();
+
     inputX = event.touches[0].clientX;
   }
   const rect = c.getBoundingClientRect();
-  mouseX = (inputX - rect.left) / 3;
+
+  mouseX = (inputX - rect.left) * (CANVAS_WIDTH / rect.width);
 }
 
 document.addEventListener("mousemove", handleInput);
-document.addEventListener("touchmove", handleInput);
+document.addEventListener("touchmove", handleInput, { passive: false });
 
 // Main Loop
 function loop() {
@@ -182,7 +186,14 @@ function loop() {
   ctx.fillStyle = "#00FFB2";
   ctx.fill();
 
-  playerX = c.width / 2 + mouseX;
+  ctx.beginPath();
+  ctx.arc(mouseX, playerY, 2, 0, 2 * Math.PI);
+  ctx.fillStyle = "red";
+  ctx.fill();
+
+  console.log("playerX: " + playerX + " mouseX: " + mouseX);
+
+  playerX += (mouseX - playerX) * playerMoveSpeed;
 
   playerX = playerX > c.width - 75 ? c.width - 75 : playerX < 75 ? 75 : playerX; // limit the player from going out of the handle
 
