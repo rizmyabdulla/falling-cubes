@@ -6,7 +6,7 @@ let CANVAS_HEIGHT = (c.height = 600);
 
 let mouseX = c.width / 2;
 
-let playerX = 0;
+let playerX = c.width / 2;
 let playerY = c.height / 2 + 20;
 let playerSize = 20;
 const playerMoveSpeed = 0.05;
@@ -255,5 +255,24 @@ function loop() {
     }
   }
 }
+
+function requestFullScreen(element) {
+  if (element.requestFullscreen) {
+    element.requestFullscreen();
+  } else if (element.mozRequestFullScreen) {
+
+    element.mozRequestFullScreen();
+  } else if (element.webkitRequestFullscreen) {
+    element.webkitRequestFullscreen();
+  } else if (element.msRequestFullscreen) {
+    element.msRequestFullscreen();
+  }
+}
+
+document
+  .getElementById("fullscreen-button")
+  .addEventListener("click", function () {
+    requestFullScreen(c);
+  });
 generateCubePos();
 loop();

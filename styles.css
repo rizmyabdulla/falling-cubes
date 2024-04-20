@@ -9,10 +9,12 @@ body {
 }
 canvas {
   border: 1px solid black;
-  display: block;
-  margin: 0 auto;
-
   border-radius: 10px;
+
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 #score {
