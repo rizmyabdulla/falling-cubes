@@ -1,6 +1,6 @@
 # Falling Cubes 🕹️
 
-## Creating this HTML5 game for practice 🎮
+## HTML5 Game 🎮
 
 [Click Here](https://rizmyabdulla.github.io/falling-cubes/) to preview the demo 💫
 
