@@ -6,21 +6,22 @@ let CANVAS_HEIGHT = (c.height = 600);
 
 let mouseX = c.width / 2;
 
+const playerMoveSpeed = 0.05;
 let playerX = c.width / 2;
 let playerY = c.height / 2 + 20;
 let playerSize = 20;
-const playerMoveSpeed = 0.05;
 
 // cube variables
 let angle = 0;
 let cubeSize = 35;
 const cubeHalfSize = cubeSize / 2;
-const cubePos = { x: [], y: [], color: [], collided: [], fallThreshold: [] };
+const cubeSpeed = 5;
+const Cube = { x: [], y: [], color: [], collided: [], fallThreshold: [] };
 const cubeColor = ["#FFFFFF", "#00FFB2"];
 
 // level variables
 let score = 0;
-const cubeSpeed = 5;
+
 let cubeFallThreshold = Math.random() * 2 - randomInt(1, 3);
 let isGameOver = false;
 
@@ -42,11 +43,11 @@ function generateCubePos() {
   let lastX = randomInt(50, c.width - 50);
   let lastY = randomInt(-10, 0);
 
-  cubePos.x.push(lastX);
-  cubePos.y.push(lastY);
-  cubePos.color.push(Math.random() < 0.85 ? 0 : 1);
-  cubePos.collided.push(false);
-  cubePos.fallThreshold.push(Math.random() * 2 - randomFloat(1, 2.5));
+  Cube.x.push(lastX);
+  Cube.y.push(lastY);
+  Cube.color.push(Math.random() < 0.85 ? 0 : 1);
+  Cube.collided.push(false);
+  Cube.fallThreshold.push(Math.random() * 2 - randomFloat(1, 2.5));
 
   let interval = randomInt(200, 500);
 
@@ -63,11 +64,11 @@ function generateCubePos() {
       newY = randomInt(-10, 0);
     }
 
-    cubePos.x.push(newX);
-    cubePos.y.push(newY);
-    cubePos.color.push(Math.random() < 0.9 ? 0 : 1);
-    cubePos.collided.push(false);
-    cubePos.fallThreshold.push(Math.random() * 2 - randomFloat(1, 2.5));
+    Cube.x.push(newX);
+    Cube.y.push(newY);
+    Cube.color.push(Math.random() < 0.9 ? 0 : 1);
+    Cube.collided.push(false);
+    Cube.fallThreshold.push(Math.random() * 2 - randomFloat(1, 2.5));
 
     lastX = newX;
     lastY = newY;
@@ -93,10 +94,51 @@ function drawObstacle(x, y, colorIndex, size) {
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
+//////////////////----------------------////////////////////
+
+const buttons = [];
+
+function drawBtn(x, y, icon, onClick) {
+  ctx.beginPath();
+  ctx.arc(x, y, 30, 0, 2 * Math.PI);
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fill();
+
+  ctx.font = "30px FontAwesome";
+  ctx.fillStyle = "#000000";
+  ctx.fillText(icon, x, y + 10);
+
+  buttons.push({ x, y, onClick });
+}
+
+canvas.addEventListener("click", function (event) {
+  const rect = canvas.getBoundingClientRect();
+  const mouseX = event.clientX - rect.left;
+  const mouseY = event.clientY - rect.top;
+
+  for (const button of buttons) {
+    if (isInsideCircle(button.x, button.y, 30, mouseX, mouseY)) {
+      button.onClick();
+      break;
+    }
+  }
+});
+
+function isInsideCircle(x, y, radius, mouseX, mouseY) {
+  return (mouseX - x) ** 2 + (mouseY - y) ** 2 <= radius ** 2;
+}
+
+//////////////////----------------------////////////////////
+
 let gameOverTextY = -20;
 let scoreTextY = CANVAS_HEIGHT + 70;
 let currentDisplayedScore = 0;
 let scoreIncreaseInterval;
+
+const icon1X = CANVAS_WIDTH / 2 - 75;
+const icon2X = CANVAS_WIDTH / 2 + 75;
+const icon3X = CANVAS_WIDTH / 2;
+let iconY = CANVAS_HEIGHT / 2 + 300;
 
 function gameOverScene() {
   ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -114,11 +156,37 @@ function gameOverScene() {
   ctx.textAlign = "center";
   ctx.fillText("Score: " + currentDisplayedScore, CANVAS_WIDTH / 2, scoreTextY);
 
+
+  drawBtn(icon1X, iconY, "");
+  drawBtn(icon2X, iconY, "", function () {
+    Cube.x = [];
+    Cube.y = [];
+    Cube.color = [];
+    Cube.collided = [];
+    Cube.fallThreshold = [];
+    score = 0;
+    currentDisplayedScore = 0;
+    playerX = c.width / 2;
+    playerY = c.height / 2 + 20;
+    playerSize = 20;
+    cubeSize = 35;
+    gameOverTextY = -20;
+    scoreTextY = CANVAS_HEIGHT + 70;
+    isGameOver = false;
+
+    generateCubePos();
+    gameScene();
+  });
+  drawBtn(icon3X, iconY, "");
+
   if (gameOverTextY < CANVAS_HEIGHT / 2) {
     gameOverTextY += 10;
   }
   if (scoreTextY > CANVAS_HEIGHT / 2 + 50) {
     scoreTextY -= 10;
+  }
+  if (iconY > CANVAS_HEIGHT / 2 + 120) {
+    iconY -= 5;
   }
 
   if (
@@ -131,6 +199,7 @@ function gameOverScene() {
   if (
     gameOverTextY < CANVAS_HEIGHT / 2 ||
     scoreTextY > CANVAS_HEIGHT / 2 + 50 ||
+    iconY < CANVAS_HEIGHT / 2 + 100 ||
     currentDisplayedScore <= score
   ) {
     requestAnimationFrame(gameOverScene);
@@ -164,8 +233,9 @@ function handleInput(event) {
 document.addEventListener("mousemove", handleInput);
 document.addEventListener("touchmove", handleInput, { passive: false });
 
-// Main Loop
-function loop() {
+////////////////////////////////////////////////////////////////////////////////////
+
+function gameScene() {
   // draw the background
   ctx.fillStyle = "#1F2539";
   ctx.fillRect(0, 0, c.width, c.height);
@@ -191,36 +261,34 @@ function loop() {
   ctx.fillStyle = "red";
   ctx.fill();
 
-  console.log("playerX: " + playerX + " mouseX: " + mouseX);
-
   playerX += (mouseX - playerX) * playerMoveSpeed;
 
   playerX = playerX > c.width - 75 ? c.width - 75 : playerX < 75 ? 75 : playerX; // limit the player from going out of the handle
 
   // draw falling cubes
-  cubePos.x.forEach((x, i) => {
-    let currentCubeSize = cubePos.collided[i] ? cubeSize - 1 : cubeSize;
+  Cube.x.forEach((x, i) => {
+    let currentCubeSize = Cube.collided[i] ? cubeSize - 1 : cubeSize;
     drawObstacle(
-      (cubePos.x[i] += cubePos.fallThreshold[i]),
-      (cubePos.y[i] += cubeSpeed),
-      cubePos.color[i],
+      (Cube.x[i] += Cube.fallThreshold[i]),
+      (Cube.y[i] += cubeSpeed),
+      Cube.color[i],
       currentCubeSize
     );
   });
 
-  for (let i = 0; i < cubePos.x.length; i++) {
+  for (let i = 0; i < Cube.x.length; i++) {
     // remove cubes that fall off the screen
-    if (cubePos.y[i] > c.height / 1.5) {
-      cubePos.y.splice(i, 1);
-      cubePos.x.splice(i, 1);
-      cubePos.color.splice(i, 1);
-      cubePos.collided.splice(i, 1);
-      cubePos.fallThreshold.splice(i, 1);
+    if (Cube.y[i] > c.height / 1.5) {
+      Cube.y.splice(i, 1);
+      Cube.x.splice(i, 1);
+      Cube.color.splice(i, 1);
+      Cube.collided.splice(i, 1);
+      Cube.fallThreshold.splice(i, 1);
       continue;
     }
     let distance = getDistance(
-      cubePos.x[i] + cubeHalfSize,
-      cubePos.y[i] + cubeHalfSize,
+      Cube.x[i] + cubeHalfSize,
+      Cube.y[i] + cubeHalfSize,
       playerX,
       playerY
     );
@@ -229,50 +297,35 @@ function loop() {
       Math.sqrt(cubeHalfSize * cubeHalfSize + cubeHalfSize * cubeHalfSize);
 
     let isCollided = distance < minCollisionDistance;
-    if (isCollided && cubePos.color[i] === 1 && !cubePos.collided[i]) {
+    if (isCollided && Cube.color[i] === 1 && !Cube.collided[i]) {
       score++;
-      cubePos.collided[i] = true;
-      cubePos.y.splice(i, 1);
-      cubePos.x.splice(i, 1);
-      cubePos.color.splice(i, 1);
-      cubePos.collided.splice(i, 1);
-    } else if (isCollided && cubePos.color[i] === 0 && !cubePos.collided[i]) {
+      Cube.collided[i] = true;
+      Cube.y.splice(i, 1);
+      Cube.x.splice(i, 1);
+      Cube.color.splice(i, 1);
+      Cube.collided.splice(i, 1);
+    } else if (isCollided && Cube.color[i] === 0 && !Cube.collided[i]) {
       isGameOver = true;
-      cubePos.collided[i] = true;
+      Cube.collided[i] = true;
     }
   }
   angle += 2;
 
   if (!isGameOver) {
-    requestAnimationFrame(loop);
+    requestAnimationFrame(gameScene);
   } else {
     if (cubeSize > 0) {
       cubeSize -= 1;
       playerSize -= 1;
-      requestAnimationFrame(loop);
+      requestAnimationFrame(gameScene);
     } else {
       gameOverScene();
     }
   }
 }
 
-function requestFullScreen(element) {
-  if (element.requestFullscreen) {
-    element.requestFullscreen();
-  } else if (element.mozRequestFullScreen) {
+///////////////////////////////////////////////////////////////////////////////////
 
-    element.mozRequestFullScreen();
-  } else if (element.webkitRequestFullscreen) {
-    element.webkitRequestFullscreen();
-  } else if (element.msRequestFullscreen) {
-    element.msRequestFullscreen();
-  }
-}
+gameScene();
 
-document
-  .getElementById("fullscreen-button")
-  .addEventListener("click", function () {
-    requestFullScreen(c);
-  });
 generateCubePos();
-loop();
