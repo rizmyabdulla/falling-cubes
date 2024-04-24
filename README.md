@@ -22,7 +22,6 @@
 
 - [ ] Add game controls
   - [x] Mouse controls
-  - [ ] Keyboard controls
   - [x] Touch controls
 - [ ] Create game UI
 
